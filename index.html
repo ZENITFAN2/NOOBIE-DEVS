@@ -1,201 +1,335 @@
-<div id="login" style="min-height:100vh;display:grid;place-items:center;background:#0b1020;color:white;font-family:Arial,sans-serif;text-align:center;padding:20px;box-sizing:border-box">
-  <div style="width:min(360px,100%);background:#142039;padding:30px 20px;border-radius:22px;box-sizing:border-box;border:1px solid #304568">
-    <div style="font-size:65px">🎮</div>
-    <h1 style="font-size:35px;color:#ffd43b;margin:12px 0">NOOBIE DEVS</h1>
-    <p style="color:#aab8d0">ONE TEAM. INFINITE BUILDS.</p>
-    <form id="loginForm">
-      <input id="password" type="password" placeholder="Team password" required style="box-sizing:border-box;width:100%;padding:14px;border-radius:10px;border:1px solid #344565;background:#0b1020;color:white;margin:15px 0">
-      <button style="width:100%;padding:14px;background:#ffd43b;border:0;border-radius:10px;font-weight:bold;cursor:pointer">ENTER TEAM →</button>
-      <p id="error" style="color:#ff8585"></p>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NOOBIE DEVS</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:white;font-family:Arial,sans-serif}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.auth-wrap{min-height:100vh;display:grid;place-items:center;padding:20px}
+.auth-card{width:min(390px,100%);background:#142039;padding:28px 22px;border-radius:22px;border:1px solid #304568;text-align:center}
+.logo{font-size:60px}
+.auth-card h1{font-size:35px;color:#ffd43b;margin:12px 0}
+.muted{color:#aab8d0}
+.auth-card form{display:grid;gap:12px;margin-top:20px}
+.auth-card input{width:100%;padding:14px;border-radius:10px;border:1px solid #344565;background:#0b1020;color:white}
+.primary{padding:14px;background:#ffd43b;color:#101827;border:0;border-radius:10px;font-weight:bold}
+.secondary{padding:11px;background:#192943;color:white;border:1px solid #304568;border-radius:10px}
+.status{min-height:20px;color:#ff8585;font-size:14px;overflow-wrap:anywhere}
+#app{display:none;min-height:100vh;background:#0b1020}
+header{height:65px;display:flex;align-items:center;gap:18px;padding:0 18px;background:#111a2d;border-bottom:1px solid #26344d;position:sticky;top:0;z-index:5}
+header .brand{font-size:20px;font-weight:bold}
+header .brand span{color:#ffd43b}
+header .spacer{flex:1}
+#currentUser{font-size:13px;color:#aab8d0;max-width:32vw;overflow:hidden;text-overflow:ellipsis}
+#menu{background:none;border:0;color:white;font-size:28px}
+#sidebar{display:none;position:fixed;z-index:10;top:65px;bottom:0;left:0;width:245px;max-width:80vw;background:#111a2d;padding:20px;border-right:1px solid #26344d}
+#shade{display:none;position:fixed;inset:65px 0 0;background:#0009;z-index:8}
+.nav{display:block;width:100%;text-align:left;padding:15px;margin:7px 0;background:#192943;color:white;border:1px solid #304568;border-radius:10px}
+.nav:hover{background:#28446c}
+main{padding:25px 18px;max-width:900px;margin:auto}
+.page{display:none}
+#members{display:block}
+.heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.heading h2{font-size:28px}
+.add{background:#3984ff;color:white;border:0;border-radius:13px;width:52px;height:52px;font-size:30px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:25px}
+.card{background:#142039;border:1px solid #263d5c;padding:20px;border-radius:15px;overflow-wrap:anywhere}
+.card h3{margin-top:5px}
+.card p{color:#aab8d0;white-space:pre-wrap;line-height:1.5}
+.card button,.card a{display:inline-block;padding:8px 11px;margin:5px 5px 0 0;border-radius:8px;border:1px solid #344565;background:#0b1020;color:white;text-decoration:none}
+#fields{display:grid;gap:12px}
+#fields input,#fields textarea{width:100%;padding:12px;background:#0b1020;color:white;border:1px solid #344565;border-radius:9px}
+#fields textarea{min-height:90px}
+#modal{display:none;position:fixed;inset:0;z-index:20;background:#000b;place-items:center;padding:20px}
+#itemForm{position:relative;background:#142039;padding:25px;border-radius:18px;width:min(400px,100%);max-height:90vh;overflow:auto;color:white}
+#close{position:absolute;right:12px;top:10px;background:none;border:0;color:white;font-size:25px}
+#chatPanel{background:#142039;border:1px solid #26344d;border-radius:15px;overflow:hidden}
+#messages{height:350px;overflow:auto;padding:15px}
+#chatForm{display:flex;gap:7px;flex-wrap:wrap;padding:12px;border-top:1px solid #26344d}
+#chatForm input{min-width:0;padding:12px;background:#0b1020;color:white;border:1px solid #344565;border-radius:9px}
+#message{flex:1;min-width:120px}
+.bubble{background:#233653;border-radius:12px;padding:12px;margin:10px 0;overflow-wrap:anywhere}
+.bubble small{display:block;color:#8ebaff;margin-bottom:6px}
+#chatStatus{padding:0 14px;color:#aab8d0;font-size:12px}
+@media(max-width:450px){.heading h2{font-size:23px}#currentUser{display:none}#message{width:100%}}
+</style>
+</head>
+<body>
+<section id="auth" class="auth-wrap">
+  <div class="auth-card">
+    <div class="logo">🎮</div>
+    <h1>NOOBIE DEVS</h1>
+    <p class="muted">ONE TEAM. INFINITE BUILDS.</p>
+    <form id="authForm">
+      <input id="displayName" maxlength="30" placeholder="Display name" autocomplete="nickname" required>
+      <input id="email" type="email" placeholder="Email address" autocomplete="email" required>
+      <input id="password" type="password" placeholder="Password (at least 6 characters)" minlength="6" autocomplete="current-password" required>
+      <button id="authSubmit" class="primary" type="submit">LOG IN →</button>
+      <button id="toggleAuth" class="secondary" type="button">Need an account? Register</button>
+      <p id="authStatus" class="status" role="status"></p>
     </form>
+    <p class="muted" style="font-size:12px">Use your own account. Never share your password.</p>
   </div>
-</div>
+</section>
 
-<div id="app" style="display:none;min-height:100vh;background:#0b1020;color:white;font-family:Arial,sans-serif">
-  <header style="height:65px;display:flex;align-items:center;gap:18px;padding:0 18px;background:#111a2d;border-bottom:1px solid #26344d;position:sticky;top:0;z-index:5">
-    <button id="menu" style="background:none;border:0;color:white;font-size:28px;cursor:pointer">☰</button>
-    <b style="font-size:20px">NOOBIE <span style="color:#ffd43b">DEVS</span></b>
+<div id="app">
+  <header>
+    <button id="menu" aria-label="Open menu">☰</button>
+    <div class="brand">NOOBIE <span>DEVS</span></div>
+    <div class="spacer"></div><span id="currentUser"></span>
+    <button id="logout" class="secondary">Log out</button>
   </header>
-
-  <nav id="sidebar" style="display:none;position:fixed;z-index:10;top:65px;bottom:0;left:0;width:245px;max-width:80vw;background:#111a2d;padding:20px;box-sizing:border-box;border-right:1px solid #26344d">
+  <nav id="sidebar">
     <p style="font-size:11px;color:#8e9ab3;letter-spacing:2px">TEAM WORKSPACE</p>
     <button class="nav" data-page="members">👥 Members</button>
     <button class="nav" data-page="games">🎮 Games</button>
     <button class="nav" data-page="chat">💬 Chat</button>
     <p style="position:absolute;bottom:15px;color:#aab8d0">💙 NOOBIE DEVS TEAM</p>
   </nav>
-
-  <div id="shade" style="display:none;position:fixed;inset:65px 0 0;background:#0009;z-index:8"></div>
-
-  <main style="padding:25px 18px;max-width:900px;margin:auto">
+  <div id="shade"></div>
+  <main>
     <section id="members" class="page">
-      <p style="color:#8e9ab3;font-size:11px;letter-spacing:2px">YOUR COMMUNITY</p>
-      <div class="heading">
-        <h2>Team Members 👥</h2>
-        <button class="add" data-type="members">+</button>
-      </div>
-      <p style="color:#aab8d0">Meet your team and manage member details.</p>
-      <div id="memberList" class="grid"></div>
+      <p class="muted" style="font-size:11px;letter-spacing:2px">YOUR COMMUNITY</p>
+      <div class="heading"><h2>Team Members 👥</h2><button class="add" data-type="members">+</button></div>
+      <p class="muted">Meet your team and manage member details.</p><div id="memberList" class="grid"></div>
     </section>
-
-```
-<section id="games" class="page" style="display:none">
-  <p style="color:#8e9ab3;font-size:11px;letter-spacing:2px">OUR PROJECTS</p>
-  <div class="heading">
-    <h2>Our Games 🎮</h2>
-    <button class="add" data-type="games">+</button>
-  </div>
-  <p style="color:#aab8d0">Keep track of your team's creations.</p>
-  <div id="gameList" class="grid"></div>
-</section>
-
-<section id="chat" class="page" style="display:none">
-  <p style="color:#8e9ab3;font-size:11px;letter-spacing:2px">TEAM COMMUNICATION</p>
-  <h2>Team Chat 💬</h2>
-  <div style="background:#142039;border:1px solid #26344d;border-radius:15px;overflow:hidden">
-    <div style="padding:17px;border-bottom:1px solid #26344d">💙 <b>Noobie Devs Chat</b></div>
-    <div id="messages" style="height:350px;overflow:auto;padding:15px"></div>
-    <form id="chatForm" style="display:flex;gap:7px;flex-wrap:wrap;padding:12px;border-top:1px solid #26344d">
-      <input id="sender" placeholder="Your name" maxlength="30" required>
-      <input id="message" placeholder="Write a message..." maxlength="500" required style="flex:1;min-width:100px">
-      <button class="add" style="width:45px;height:45px">➤</button>
-    </form>
-  </div>
-  <p style="color:#8e9ab3;font-size:12px">Demo chat: messages are not shared between different devices yet.</p>
-</section>
-```
-
+    <section id="games" class="page">
+      <p class="muted" style="font-size:11px;letter-spacing:2px">OUR PROJECTS</p>
+      <div class="heading"><h2>Our Games 🎮</h2><button class="add" data-type="games">+</button></div>
+      <p class="muted">Keep track of your team's creations.</p><div id="gameList" class="grid"></div>
+    </section>
+    <section id="chat" class="page">
+      <p class="muted" style="font-size:11px;letter-spacing:2px">TEAM COMMUNICATION</p><h2>Team Chat 💬</h2>
+      <div id="chatPanel">
+        <div style="padding:17px;border-bottom:1px solid #26344d">💙 <b>Noobie Devs Chat</b></div>
+        <div id="messages" aria-live="polite"></div>
+        <form id="chatForm"><input id="message" placeholder="Write a message..." maxlength="500" required><button class="add" style="width:45px;height:45px" aria-label="Send message">➤</button></form>
+        <p id="chatStatus">Connecting to chat…</p>
+      </div>
+    </section>
   </main>
 </div>
 
-<div id="modal" style="display:none;position:fixed;inset:0;z-index:20;background:#000b;place-items:center;padding:20px;box-sizing:border-box">
-  <form id="itemForm" style="position:relative;background:#142039;padding:25px;border-radius:18px;width:min(400px,100%);box-sizing:border-box">
-    <button type="button" id="close" style="position:absolute;right:12px;top:10px;background:none;border:0;color:white;font-size:25px">×</button>
-    <h2 id="modalTitle">Add item</h2>
-    <div id="fields"></div>
-    <button style="width:100%;padding:13px;background:#3984ff;color:white;border:0;border-radius:10px;margin-top:15px;font-weight:bold">SAVE</button>
+<div id="modal">
+  <form id="itemForm">
+    <button type="button" id="close" aria-label="Close">×</button><h2 id="modalTitle">Add item</h2>
+    <div id="fields"></div><button class="primary" style="width:100%;margin-top:15px">SAVE</button>
+    <p id="itemStatus" class="status"></p>
   </form>
 </div>
 
-<style>
-*{box-sizing:border-box}
-body{margin:0;background:#0b1020}
-button,input,textarea{font:inherit}
-.nav{display:block;width:100%;text-align:left;padding:15px;margin:7px 0;background:#192943;color:white;border:1px solid #304568;border-radius:10px;cursor:pointer}
-.nav:hover{background:#28446c}
-.heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.heading h2{font-size:28px}
-.add{background:#3984ff;color:white;border:0;border-radius:13px;width:52px;height:52px;font-size:30px;cursor:pointer}
-.add:hover{background:#64a0ff}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:25px}
-.card{background:#142039;border:1px solid #263d5c;padding:20px;border-radius:15px;overflow-wrap:anywhere}
-.card h3{margin-top:5px}
-.card p{color:#aab8d0;white-space:pre-wrap;line-height:1.5}
-.card button,.card a{display:inline-block;padding:8px 11px;margin:5px 5px 0 0;border-radius:8px;border:1px solid #344565;background:#0b1020;color:white;text-decoration:none;cursor:pointer}
-#fields{display:grid;gap:12px}
-#fields input,#fields textarea{width:100%;padding:12px;background:#0b1020;color:white;border:1px solid #344565;border-radius:9px}
-#fields textarea{min-height:90px}
-#itemForm{max-height:90vh;overflow:auto;color:white}
-#chatForm input{min-width:0;padding:12px;background:#0b1020;color:white;border:1px solid #344565;border-radius:9px}
-#chatForm input:first-child{width:100px}
-.bubble{background:#233653;border-radius:12px;padding:12px;margin:10px 0;overflow-wrap:anywhere}
-.bubble small{display:block;color:#8ebaff;margin-bottom:6px}
-@media(max-width:450px){.heading h2{font-size:23px}#chatForm input:first-child{width:100%}}
-</style>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
-<script>
-const $=id=>document.getElementById(id);
-const KEY="noobie_craft_demo_v1";
-let data;
-try{data=JSON.parse(localStorage.getItem(KEY))||{members:[],games:[],messages:[]}}catch(e){data={members:[],games:[],messages:[]}}
-let type="members",editId=null;
+// Replace these values with the exact firebaseConfig from your Firebase Web App settings.
+const firebaseConfig = {
+  apiKey: "AIzaSyDojRAQx-Rc88mcTbiUz6DjEoVT2DDfjB0",
+  authDomain: "noobie-devs.firebaseapp.com",
+  databaseURL: "https://noobie-devs-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "noobie-devs",
+  storageBucket: "noobie-devs.firebasestorage.app",
+  messagingSenderId: "639746002699",
+  appId: "1:639746002699:web:ce8cedec651d068926dc0e",
+  measurementId: "G-6TJ860NS33"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const $ = id => document.getElementById(id);
+let registerMode = false, currentUser = null, type = "members", editId = null;
+let stopMessages = null, stopMembers = null, stopGames = null;
+let membersData = [], gamesData = [];
 
-function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){alert("Browser storage is full.")}}
-function safe(tag,text){let e=document.createElement(tag);e.textContent=text;return e}
+$("toggleAuth").onclick = () => {
+  registerMode = !registerMode;
+  $("authSubmit").textContent = registerMode ? "CREATE ACCOUNT →" : "LOG IN →";
+  $("toggleAuth").textContent = registerMode ? "Already have an account? Log in" : "Need an account? Register";
+  $("displayName").style.display = registerMode ? "block" : "none";
+  $("displayName").required = registerMode;
+  $("password").autocomplete = registerMode ? "new-password" : "current-password";
+  $("authStatus").textContent = "";
+};
+$("displayName").style.display = "none";
+$("displayName").required = false;
 
-$("loginForm").onsubmit=e=>{
- e.preventDefault();
- if($("password").value!=="NOOBIEDEVSTEAM456"){$("error").textContent="Incorrect password!";return}
- $("login").style.display="none";$("app").style.display="block";render()
+$("authForm").onsubmit = async e => {
+  e.preventDefault();
+  $("authStatus").textContent = "";
+  const email = $("email").value.trim();
+  const password = $("password").value;
+  const name = $("displayName").value.trim();
+  try {
+    if (registerMode) {
+      if (name.length < 2) throw new Error("Display name must be at least 2 characters.");
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(cred.user, { displayName: name });
+    } else {
+      await signInWithEmailAndPassword(auth, email, password);
+    }
+  } catch (err) {
+    $("authStatus").textContent = friendlyError(err);
+  }
 };
 
-function sidebar(open){$("sidebar").style.display=open?"block":"none";$("shade").style.display=open?"block":"none"}
-$("menu").onclick=()=>sidebar($("sidebar").style.display==="none");
-$("shade").onclick=()=>sidebar(false);
+function friendlyError(err) {
+  const code = err?.code || "";
+  const messages = {
+    "auth/email-already-in-use":"That email already has an account. Try logging in.",
+    "auth/invalid-email":"Please enter a valid email address.",
+    "auth/weak-password":"Use a password with at least 6 characters.",
+    "auth/invalid-credential":"Email or password is incorrect.",
+    "auth/too-many-requests":"Too many attempts. Please wait and try again.",
+    "auth/network-request-failed":"Network error. Check your internet connection.",
+    "auth/operation-not-allowed":"Email/Password sign-in is not enabled in Firebase Authentication."
+  };
+  if (messages[code]) return messages[code];
+  if (String(err?.message||"").includes("API key not valid")) return "Firebase config is incomplete or incorrect. Replace the API key and App ID placeholders.";
+  return err?.message || "Something went wrong. Please try again.";
+}
 
-document.querySelectorAll(".nav").forEach(b=>b.onclick=()=>{
- document.querySelectorAll(".page").forEach(p=>p.style.display="none");
- $(b.dataset.page).style.display="block";sidebar(false)
+function showPage(id) {
+  document.querySelectorAll(".page").forEach(p => p.style.display = "none");
+  $(id).style.display = "block";
+  sidebar(false);
+}
+function sidebar(open) { $("sidebar").style.display = open ? "block" : "none"; $("shade").style.display = open ? "block" : "none"; }
+$("menu").onclick = () => sidebar($("sidebar").style.display === "none");
+$("shade").onclick = () => sidebar(false);
+document.querySelectorAll(".nav").forEach(b => b.onclick = () => showPage(b.dataset.page));
+
+$("logout").onclick = async () => { await signOut(auth); };
+$("chatForm").onsubmit = async e => {
+  e.preventDefault();
+  const text = $("message").value.trim();
+  if (!currentUser || !text) return;
+  if (text.length > 500) return;
+  $("chatStatus").textContent = "Sending…";
+  try {
+    await set(push(ref(db, "messages")), {
+      uid: currentUser.uid,
+      name: currentUser.displayName || "Team member",
+      text,
+      time: Date.now()
+    });
+    $("message").value = "";
+    $("chatStatus").textContent = "Connected — messages sync in real time.";
+  } catch (err) {
+    $("chatStatus").textContent = "Could not send message. Check Firebase Database Rules.";
+    console.error(err);
+  }
+};
+
+function drawMessages(raw) {
+  const box = $("messages"); box.replaceChildren();
+  const entries = Object.entries(raw || {}).map(([id, m]) => ({id, ...m}))
+    .filter(m => m && typeof m.text === "string" && typeof m.name === "string")
+    .sort((a,b) => (a.time || 0) - (b.time || 0)).slice(-100);
+  for (const m of entries) {
+    const bubble = document.createElement("div"); bubble.className = "bubble";
+    const small = document.createElement("small");
+    small.textContent = `${m.name} · ${m.time ? new Date(m.time).toLocaleString() : ""}`;
+    const body = document.createElement("div"); body.textContent = m.text;
+    bubble.append(small, body); box.appendChild(bubble);
+  }
+  box.scrollTop = box.scrollHeight;
+}
+function startRealtime() {
+  if (stopMessages) stopMessages();
+  stopMessages = onValue(ref(db, "messages"), snap => {
+    drawMessages(snap.val());
+    $("chatStatus").textContent = "Connected — messages sync in real time.";
+  }, err => {
+    $("chatStatus").textContent = "Chat access blocked. Check Firebase Rules.";
+    console.error(err);
+  });
+  if (stopMembers) stopMembers();
+  stopMembers = onValue(ref(db, "members"), snap => {
+    membersData = Object.entries(snap.val() || {}).map(([id,v]) => ({id,...v}));
+    renderCards("members", "memberList", membersData);
+  }, err => console.error(err));
+  if (stopGames) stopGames();
+  stopGames = onValue(ref(db, "games"), snap => {
+    gamesData = Object.entries(snap.val() || {}).map(([id,v]) => ({id,...v}));
+    renderCards("games", "gameList", gamesData);
+  }, err => console.error(err));
+}
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  $("auth").style.display = user ? "none" : "grid";
+  $("app").style.display = user ? "block" : "none";
+  if (user) {
+    $("currentUser").textContent = user.displayName || user.email || "Team member";
+    startRealtime();
+  } else {
+    if (stopMessages) stopMessages(); stopMessages = null;
+    if (stopMembers) stopMembers(); stopMembers = null;
+    if (stopGames) stopGames(); stopGames = null;
+  }
 });
 
-document.querySelectorAll(".add").forEach(b=>{
- if(b.dataset.type)b.onclick=()=>openForm(b.dataset.type)
-});
-
-function openForm(t,item=null){
- type=t;editId=item?item.id:null;
- $("modalTitle").textContent=(item?"Edit ":"Add ")+(t==="members"?"Member":"Game");
- $("fields").replaceChildren();
- const fields=t==="members"?[
- ["name","Member name"],["role","Team role"],["description","About member"]
- ]:[
- ["name","Game name"],["status","Development status"],["description","Game description"],["link","Roblox game URL (optional)"]
- ];
- fields.forEach(([key,label])=>{
-  const wrap=document.createElement("label");wrap.style.color="#aab8d0";wrap.textContent=label;
-  const input=key==="description"?document.createElement("textarea"):document.createElement("input");
-  input.name=key;input.placeholder=label;input.maxLength=2000;input.value=item?.[key]||"";
-  if(key==="name")input.required=true;
-  if(key==="link")input.type="url";
-  wrap.appendChild(input);$("fields").appendChild(wrap)
- });
- $("modal").style.display="grid"
+document.querySelectorAll(".add").forEach(b => { if (b.dataset.type) b.onclick = () => openForm(b.dataset.type); });
+function openForm(t, item = null) {
+  type = t; editId = item ? item.id : null;
+  $("modalTitle").textContent = (item ? "Edit " : "Add ") + (t === "members" ? "Member" : "Game");
+  $("fields").replaceChildren(); $("itemStatus").textContent = "";
+  const fields = t === "members" ? [["name","Member name"],["role","Team role"],["description","About member"]] :
+    [["name","Game name"],["status","Development status"],["description","Game description"],["link","Roblox game URL (optional)"]];
+  for (const [key,label] of fields) {
+    const wrap = document.createElement("label"); wrap.style.color = "#aab8d0"; wrap.textContent = label;
+    const input = key === "description" ? document.createElement("textarea") : document.createElement("input");
+    input.name = key; input.placeholder = label; input.maxLength = 2000; input.value = item?.[key] || "";
+    if (key === "name") input.required = true;
+    if (key === "link") input.type = "url";
+    wrap.appendChild(input); $("fields").appendChild(wrap);
+  }
+  $("modal").style.display = "grid";
 }
-$("close").onclick=()=>$("modal").style.display="none";
-$("modal").onclick=e=>{if(e.target===$("modal"))$("modal").style.display="none"};
-
-$("itemForm").onsubmit=e=>{
- e.preventDefault();
- const obj=Object.fromEntries(new FormData(e.target).entries());
- if(type==="games"&&obj.link){
-  try{let u=new URL(obj.link);if(u.protocol!=="https:"||!/(^|\.)roblox\.com$/.test(u.hostname))throw 0}catch{alert("Enter a valid Roblox HTTPS link.");return}
- }
- if(editId){data[type]=data[type].map(x=>x.id===editId?{...x,...obj}:x)}
- else data[type].push({id:Date.now().toString()+Math.random(),...obj});
- save();$("modal").style.display="none";render()
+$("close").onclick = () => $("modal").style.display = "none";
+$("modal").onclick = e => { if (e.target === $("modal")) $("modal").style.display = "none"; };
+$("itemForm").onsubmit = async e => {
+  e.preventDefault();
+  if (!currentUser) return;
+  const obj = Object.fromEntries(new FormData(e.target).entries());
+  if (type === "games" && obj.link) {
+    try { const u = new URL(obj.link); if (u.protocol !== "https:" || !/(^|\.)roblox\.com$/.test(u.hostname)) throw 0; }
+    catch { $("itemStatus").textContent = "Enter a valid Roblox HTTPS link."; return; }
+  }
+  try {
+    if (editId) await update(ref(db, `${type}/${editId}`), obj);
+    else await set(push(ref(db, type)), {...obj, createdBy: currentUser.uid});
+    $("modal").style.display = "none";
+  } catch (err) {
+    $("itemStatus").textContent = "Could not save. Check Firebase Database Rules.";
+    console.error(err);
+  }
 };
-
-function remove(t,id){if(confirm("Delete this item?")){data[t]=data[t].filter(x=>x.id!==id);save();render()}}
-function renderCards(t,id){
- const box=$(id);box.replaceChildren();
- data[t].forEach(item=>{
-  const c=safe("div","");c.className="card";
-  c.appendChild(safe("div",t==="members"?"👤":"🎮"));
-  c.appendChild(safe("h3",item.name));
-  c.appendChild(safe("p",t==="members"?(item.role||"Team Member"):(item.status||"In Development")));
-  if(item.description)c.appendChild(safe("p",item.description));
-  if(t==="games"&&item.link){const a=safe("a","View on Roblox ↗");a.href=item.link;a.target="_blank";a.rel="noopener noreferrer";c.appendChild(a)}
-  const edit=safe("button","Edit");edit.onclick=()=>openForm(t,item);
-  const del=safe("button","Delete");del.onclick=()=>remove(t,item.id);
-  c.append(edit,del);box.appendChild(c)
- })
+async function deleteItem(t, id) {
+  if (confirm("Delete this item?")) {
+    try { await remove(ref(db, `${t}/${id}`)); }
+    catch (err) { alert("Could not delete. Check Firebase Database Rules."); console.error(err); }
+  }
 }
-function render(){
- renderCards("members","memberList");renderCards("games","gameList");
- const box=$("messages");box.replaceChildren();
- data.messages.forEach(m=>{
-  const bubble=document.createElement("div");bubble.className="bubble";
-  bubble.appendChild(safe("small",m.name+" · "+new Date(m.time).toLocaleString()));
-  bubble.appendChild(safe("div",m.text));box.appendChild(bubble)
- });
- box.scrollTop=box.scrollHeight
+function renderCards(t, id, items) {
+  const box = $(id); box.replaceChildren();
+  for (const item of items) {
+    const c = document.createElement("div"); c.className = "card";
+    const icon = document.createElement("div"); icon.textContent = t === "members" ? "👤" : "🎮";
+    const title = document.createElement("h3"); title.textContent = item.name || "";
+    const sub = document.createElement("p"); sub.textContent = t === "members" ? (item.role || "Team Member") : (item.status || "In Development");
+    c.append(icon, title, sub);
+    if (item.description) { const p = document.createElement("p"); p.textContent = item.description; c.appendChild(p); }
+    if (t === "games" && item.link) { const a = document.createElement("a"); a.textContent = "View on Roblox ↗"; a.href = item.link; a.target = "_blank"; a.rel = "noopener noreferrer"; c.appendChild(a); }
+    const edit = document.createElement("button"); edit.textContent = "Edit"; edit.onclick = () => openForm(t, item);
+    const del = document.createElement("button"); del.textContent = "Delete"; del.onclick = () => deleteItem(t, item.id);
+    c.append(edit, del); box.appendChild(c);
+  }
 }
-$("chatForm").onsubmit=e=>{
- e.preventDefault();
- const name=$("sender").value.trim(),text=$("message").value.trim();
- if(!name||!text)return;
- if(data.messages.length>=300){alert("Demo message limit reached.");return}
- data.messages.push({name,text,time:Date.now()});
- save();$("message").value="";render()
-};
 </script>
+</body>
+</html>

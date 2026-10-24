@@ -1,0 +1,201 @@
+<div id="login" style="min-height:100vh;display:grid;place-items:center;background:#0b1020;color:white;font-family:Arial,sans-serif;text-align:center;padding:20px;box-sizing:border-box">
+  <div style="width:min(360px,100%);background:#142039;padding:30px 20px;border-radius:22px;box-sizing:border-box;border:1px solid #304568">
+    <div style="font-size:65px">🎮</div>
+    <h1 style="font-size:35px;color:#ffd43b;margin:12px 0">NOOBIE DEVS</h1>
+    <p style="color:#aab8d0">ONE TEAM. INFINITE BUILDS.</p>
+    <form id="loginForm">
+      <input id="password" type="password" placeholder="Team password" required style="box-sizing:border-box;width:100%;padding:14px;border-radius:10px;border:1px solid #344565;background:#0b1020;color:white;margin:15px 0">
+      <button style="width:100%;padding:14px;background:#ffd43b;border:0;border-radius:10px;font-weight:bold;cursor:pointer">ENTER TEAM →</button>
+      <p id="error" style="color:#ff8585"></p>
+    </form>
+  </div>
+</div>
+
+<div id="app" style="display:none;min-height:100vh;background:#0b1020;color:white;font-family:Arial,sans-serif">
+  <header style="height:65px;display:flex;align-items:center;gap:18px;padding:0 18px;background:#111a2d;border-bottom:1px solid #26344d;position:sticky;top:0;z-index:5">
+    <button id="menu" style="background:none;border:0;color:white;font-size:28px;cursor:pointer">☰</button>
+    <b style="font-size:20px">NOOBIE <span style="color:#ffd43b">DEVS</span></b>
+  </header>
+
+  <nav id="sidebar" style="display:none;position:fixed;z-index:10;top:65px;bottom:0;left:0;width:245px;max-width:80vw;background:#111a2d;padding:20px;box-sizing:border-box;border-right:1px solid #26344d">
+    <p style="font-size:11px;color:#8e9ab3;letter-spacing:2px">TEAM WORKSPACE</p>
+    <button class="nav" data-page="members">👥 Members</button>
+    <button class="nav" data-page="games">🎮 Games</button>
+    <button class="nav" data-page="chat">💬 Chat</button>
+    <p style="position:absolute;bottom:15px;color:#aab8d0">💙 NOOBIE DEVS TEAM</p>
+  </nav>
+
+  <div id="shade" style="display:none;position:fixed;inset:65px 0 0;background:#0009;z-index:8"></div>
+
+  <main style="padding:25px 18px;max-width:900px;margin:auto">
+    <section id="members" class="page">
+      <p style="color:#8e9ab3;font-size:11px;letter-spacing:2px">YOUR COMMUNITY</p>
+      <div class="heading">
+        <h2>Team Members 👥</h2>
+        <button class="add" data-type="members">+</button>
+      </div>
+      <p style="color:#aab8d0">Meet your team and manage member details.</p>
+      <div id="memberList" class="grid"></div>
+    </section>
+
+```
+<section id="games" class="page" style="display:none">
+  <p style="color:#8e9ab3;font-size:11px;letter-spacing:2px">OUR PROJECTS</p>
+  <div class="heading">
+    <h2>Our Games 🎮</h2>
+    <button class="add" data-type="games">+</button>
+  </div>
+  <p style="color:#aab8d0">Keep track of your team's creations.</p>
+  <div id="gameList" class="grid"></div>
+</section>
+
+<section id="chat" class="page" style="display:none">
+  <p style="color:#8e9ab3;font-size:11px;letter-spacing:2px">TEAM COMMUNICATION</p>
+  <h2>Team Chat 💬</h2>
+  <div style="background:#142039;border:1px solid #26344d;border-radius:15px;overflow:hidden">
+    <div style="padding:17px;border-bottom:1px solid #26344d">💙 <b>Noobie Devs Chat</b></div>
+    <div id="messages" style="height:350px;overflow:auto;padding:15px"></div>
+    <form id="chatForm" style="display:flex;gap:7px;flex-wrap:wrap;padding:12px;border-top:1px solid #26344d">
+      <input id="sender" placeholder="Your name" maxlength="30" required>
+      <input id="message" placeholder="Write a message..." maxlength="500" required style="flex:1;min-width:100px">
+      <button class="add" style="width:45px;height:45px">➤</button>
+    </form>
+  </div>
+  <p style="color:#8e9ab3;font-size:12px">Demo chat: messages are not shared between different devices yet.</p>
+</section>
+```
+
+  </main>
+</div>
+
+<div id="modal" style="display:none;position:fixed;inset:0;z-index:20;background:#000b;place-items:center;padding:20px;box-sizing:border-box">
+  <form id="itemForm" style="position:relative;background:#142039;padding:25px;border-radius:18px;width:min(400px,100%);box-sizing:border-box">
+    <button type="button" id="close" style="position:absolute;right:12px;top:10px;background:none;border:0;color:white;font-size:25px">×</button>
+    <h2 id="modalTitle">Add item</h2>
+    <div id="fields"></div>
+    <button style="width:100%;padding:13px;background:#3984ff;color:white;border:0;border-radius:10px;margin-top:15px;font-weight:bold">SAVE</button>
+  </form>
+</div>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020}
+button,input,textarea{font:inherit}
+.nav{display:block;width:100%;text-align:left;padding:15px;margin:7px 0;background:#192943;color:white;border:1px solid #304568;border-radius:10px;cursor:pointer}
+.nav:hover{background:#28446c}
+.heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.heading h2{font-size:28px}
+.add{background:#3984ff;color:white;border:0;border-radius:13px;width:52px;height:52px;font-size:30px;cursor:pointer}
+.add:hover{background:#64a0ff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:25px}
+.card{background:#142039;border:1px solid #263d5c;padding:20px;border-radius:15px;overflow-wrap:anywhere}
+.card h3{margin-top:5px}
+.card p{color:#aab8d0;white-space:pre-wrap;line-height:1.5}
+.card button,.card a{display:inline-block;padding:8px 11px;margin:5px 5px 0 0;border-radius:8px;border:1px solid #344565;background:#0b1020;color:white;text-decoration:none;cursor:pointer}
+#fields{display:grid;gap:12px}
+#fields input,#fields textarea{width:100%;padding:12px;background:#0b1020;color:white;border:1px solid #344565;border-radius:9px}
+#fields textarea{min-height:90px}
+#itemForm{max-height:90vh;overflow:auto;color:white}
+#chatForm input{min-width:0;padding:12px;background:#0b1020;color:white;border:1px solid #344565;border-radius:9px}
+#chatForm input:first-child{width:100px}
+.bubble{background:#233653;border-radius:12px;padding:12px;margin:10px 0;overflow-wrap:anywhere}
+.bubble small{display:block;color:#8ebaff;margin-bottom:6px}
+@media(max-width:450px){.heading h2{font-size:23px}#chatForm input:first-child{width:100%}}
+</style>
+
+<script>
+const $=id=>document.getElementById(id);
+const KEY="noobie_craft_demo_v1";
+let data;
+try{data=JSON.parse(localStorage.getItem(KEY))||{members:[],games:[],messages:[]}}catch(e){data={members:[],games:[],messages:[]}}
+let type="members",editId=null;
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){alert("Browser storage is full.")}}
+function safe(tag,text){let e=document.createElement(tag);e.textContent=text;return e}
+
+$("loginForm").onsubmit=e=>{
+ e.preventDefault();
+ if($("password").value!=="NOOBIEDEVSTEAM456"){$("error").textContent="Incorrect password!";return}
+ $("login").style.display="none";$("app").style.display="block";render()
+};
+
+function sidebar(open){$("sidebar").style.display=open?"block":"none";$("shade").style.display=open?"block":"none"}
+$("menu").onclick=()=>sidebar($("sidebar").style.display==="none");
+$("shade").onclick=()=>sidebar(false);
+
+document.querySelectorAll(".nav").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll(".page").forEach(p=>p.style.display="none");
+ $(b.dataset.page).style.display="block";sidebar(false)
+});
+
+document.querySelectorAll(".add").forEach(b=>{
+ if(b.dataset.type)b.onclick=()=>openForm(b.dataset.type)
+});
+
+function openForm(t,item=null){
+ type=t;editId=item?item.id:null;
+ $("modalTitle").textContent=(item?"Edit ":"Add ")+(t==="members"?"Member":"Game");
+ $("fields").replaceChildren();
+ const fields=t==="members"?[
+ ["name","Member name"],["role","Team role"],["description","About member"]
+ ]:[
+ ["name","Game name"],["status","Development status"],["description","Game description"],["link","Roblox game URL (optional)"]
+ ];
+ fields.forEach(([key,label])=>{
+  const wrap=document.createElement("label");wrap.style.color="#aab8d0";wrap.textContent=label;
+  const input=key==="description"?document.createElement("textarea"):document.createElement("input");
+  input.name=key;input.placeholder=label;input.maxLength=2000;input.value=item?.[key]||"";
+  if(key==="name")input.required=true;
+  if(key==="link")input.type="url";
+  wrap.appendChild(input);$("fields").appendChild(wrap)
+ });
+ $("modal").style.display="grid"
+}
+$("close").onclick=()=>$("modal").style.display="none";
+$("modal").onclick=e=>{if(e.target===$("modal"))$("modal").style.display="none"};
+
+$("itemForm").onsubmit=e=>{
+ e.preventDefault();
+ const obj=Object.fromEntries(new FormData(e.target).entries());
+ if(type==="games"&&obj.link){
+  try{let u=new URL(obj.link);if(u.protocol!=="https:"||!/(^|\.)roblox\.com$/.test(u.hostname))throw 0}catch{alert("Enter a valid Roblox HTTPS link.");return}
+ }
+ if(editId){data[type]=data[type].map(x=>x.id===editId?{...x,...obj}:x)}
+ else data[type].push({id:Date.now().toString()+Math.random(),...obj});
+ save();$("modal").style.display="none";render()
+};
+
+function remove(t,id){if(confirm("Delete this item?")){data[t]=data[t].filter(x=>x.id!==id);save();render()}}
+function renderCards(t,id){
+ const box=$(id);box.replaceChildren();
+ data[t].forEach(item=>{
+  const c=safe("div","");c.className="card";
+  c.appendChild(safe("div",t==="members"?"👤":"🎮"));
+  c.appendChild(safe("h3",item.name));
+  c.appendChild(safe("p",t==="members"?(item.role||"Team Member"):(item.status||"In Development")));
+  if(item.description)c.appendChild(safe("p",item.description));
+  if(t==="games"&&item.link){const a=safe("a","View on Roblox ↗");a.href=item.link;a.target="_blank";a.rel="noopener noreferrer";c.appendChild(a)}
+  const edit=safe("button","Edit");edit.onclick=()=>openForm(t,item);
+  const del=safe("button","Delete");del.onclick=()=>remove(t,item.id);
+  c.append(edit,del);box.appendChild(c)
+ })
+}
+function render(){
+ renderCards("members","memberList");renderCards("games","gameList");
+ const box=$("messages");box.replaceChildren();
+ data.messages.forEach(m=>{
+  const bubble=document.createElement("div");bubble.className="bubble";
+  bubble.appendChild(safe("small",m.name+" · "+new Date(m.time).toLocaleString()));
+  bubble.appendChild(safe("div",m.text));box.appendChild(bubble)
+ });
+ box.scrollTop=box.scrollHeight
+}
+$("chatForm").onsubmit=e=>{
+ e.preventDefault();
+ const name=$("sender").value.trim(),text=$("message").value.trim();
+ if(!name||!text)return;
+ if(data.messages.length>=300){alert("Demo message limit reached.");return}
+ data.messages.push({name,text,time:Date.now()});
+ save();$("message").value="";render()
+};
+</script>

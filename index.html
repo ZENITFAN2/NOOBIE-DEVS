@@ -19,6 +19,13 @@ button{cursor:pointer}
 .primary{padding:14px;background:#ffd43b;color:#101827;border:0;border-radius:10px;font-weight:bold}
 .secondary{padding:11px;background:#192943;color:white;border:1px solid #304568;border-radius:10px}
 .status{min-height:20px;color:#ff8585;font-size:14px;overflow-wrap:anywhere}
+#teamGate{display:none;min-height:100vh;place-items:center;padding:22px;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 40%,#1b2c4a 0,#0b1020 62%)}
+.gate-watermark{position:absolute;width:clamp(150px,28vw,280px);height:clamp(150px,28vw,280px);left:50%;top:50%;transform:translate(-50%,-50%) rotate(-12deg);border-radius:22%;background:#fff;opacity:.055;pointer-events:none}
+.gate-watermark:after{content:"";position:absolute;width:31%;height:31%;background:#0b1020;left:34%;top:34%;border-radius:2px}
+.gate-card{position:relative;z-index:1;width:min(420px,100%);padding:30px 24px;border-radius:22px;background:#142039ed;border:1px solid #304568;text-align:center;box-shadow:0 18px 60px #0007;backdrop-filter:blur(8px)}
+.roblox-mark{width:68px;height:68px;display:block;margin:0 auto 14px;transform:rotate(-12deg);background:#fff;border-radius:8px;position:relative;box-shadow:0 0 28px #ffffff20}
+.roblox-mark:after{content:"";position:absolute;width:24px;height:24px;background:#142039;left:22px;top:22px;border-radius:2px}
+.gate-card h1{font-size:29px;margin:10px 0;color:#ffd43b}.gate-card form{display:grid;gap:12px;margin-top:22px}.gate-card input{width:100%;padding:14px;border-radius:10px;border:1px solid #344565;background:#0b1020;color:white}
 #app{display:none;min-height:100vh;background:#0b1020;position:relative;overflow:hidden}
 header{height:65px;display:flex;align-items:center;gap:18px;padding:0 18px;background:#111a2d;border-bottom:1px solid #26344d;position:sticky;top:0;z-index:5}
 header .brand{font-size:20px;font-weight:bold}
@@ -71,6 +78,20 @@ main{padding:25px 18px;max-width:900px;margin:auto;position:relative;z-index:1}
 @keyframes nd-drift{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-22px) rotate(5deg)}}
 @media(max-width:600px){.nd-float{width:52px;opacity:.12!important}.nd-float.nd-left{left:2px;top:14%}.nd-float.nd-right{right:2px;bottom:3%}.nd-hero{padding:14px;gap:12px}.nd-hero img{width:58px;height:58px}}
 @media(prefers-reduced-motion:reduce){.nd-float,.nd-hero img{animation:none}}
+
+/* Instagram-style preset avatar picker for team members */
+.avatar-section{display:grid;gap:10px;margin:4px 0 8px}
+.avatar-section>span{color:#aab8d0;font-size:14px}
+.avatar-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:10px;background:#0b1020;border:1px solid #344565;border-radius:12px}
+.avatar-option{height:43px;min-width:0;padding:0;border:2px solid transparent;border-radius:12px;background:#1b2b45;font-size:25px;display:grid;place-items:center;transition:transform .12s,border-color .12s,background .12s}
+.avatar-option:hover{transform:translateY(-2px);background:#2a4163}
+.avatar-option.selected{border-color:#ffd43b;background:#3b351d;box-shadow:0 0 0 2px #ffd43b22}
+.avatar-preview{width:76px;height:76px;display:grid;place-items:center;border-radius:50%;font-size:42px;background:linear-gradient(145deg,#243a5b,#111a2d);border:2px solid #ffd43b;margin:0 auto 4px}
+.member-avatar{width:66px;height:66px;display:grid;place-items:center;border-radius:50%;font-size:36px;background:linear-gradient(145deg,#243a5b,#111a2d);border:1px solid #435779;margin:0 auto 5px}
+.status-emoji{display:block;text-align:center;font-size:23px;line-height:1.3;margin:0 auto 12px;min-height:27px}
+.status-emoji-label{display:block;text-align:center;color:#aab8d0;font-size:12px;margin-bottom:10px}
+@media(max-width:400px){.avatar-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.avatar-option{height:42px}}
+
 </style>
 </head>
 <body>
@@ -88,6 +109,23 @@ main{padding:25px 18px;max-width:900px;margin:auto;position:relative;z-index:1}
       <p id="authStatus" class="status" role="status"></p>
     </form>
     <p class="muted" style="font-size:12px">Use your own account. Never share your password.</p>
+  </div>
+</section>
+
+<section id="teamGate">
+  <div class="gate-watermark" aria-hidden="true"></div>
+  <div class="gate-card">
+    <div class="roblox-mark" aria-hidden="true"></div>
+    <p class="nd-tag">SECOND-STEP VERIFICATION</p>
+    <h1>NOOBIE DEVS</h1>
+    <p class="muted">Enter the team access password to continue.</p>
+    <form id="teamGateForm">
+      <input id="teamGatePassword" type="password" placeholder="Team access password" autocomplete="off" required>
+      <button class="primary" type="submit">CONTINUE →</button>
+      <p id="teamGateStatus" class="status" role="status"></p>
+    </form>
+    <p class="muted" style="font-size:12px">Signed in as <span id="gateEmail"></span></p>
+    <button id="gateLogout" class="secondary" type="button">Log out</button>
   </div>
 </section>
 
@@ -162,7 +200,11 @@ const auth = getAuth(app);
 const db = getDatabase(app);
 const $ = id => document.getElementById(id);
 let registerMode = false, currentUser = null, type = "members", editId = null;
-let stopMessages = null, stopMembers = null, stopGames = null;
+// This client-side gate is an extra prompt, not secure authentication by itself.
+const TEAM_GATE_PASSWORD = "NOOBIEDEVSTEAM456";
+let teamGatePassed = false;
+let stopMessages = null, stopLegacyChat = null, stopMembers = null, stopGames = null;
+let firebaseMessages = {}, legacyChatMessages = {};
 let membersData = [], gamesData = [];
 
 $("toggleAuth").onclick = () => {
@@ -222,7 +264,23 @@ $("menu").onclick = () => sidebar($("sidebar").style.display === "none");
 $("shade").onclick = () => sidebar(false);
 document.querySelectorAll(".nav").forEach(b => b.onclick = () => showPage(b.dataset.page));
 
-$("logout").onclick = async () => { await signOut(auth); };
+$("logout").onclick = async () => { teamGatePassed = false; await signOut(auth); };
+$("gateLogout").onclick = async () => { teamGatePassed = false; await signOut(auth); };
+$("teamGateForm").onsubmit = e => {
+  e.preventDefault();
+  const entered = $("teamGatePassword").value;
+  if (entered === TEAM_GATE_PASSWORD) {
+    teamGatePassed = true;
+    $("teamGatePassword").value = "";
+    $("teamGateStatus").textContent = "";
+    $("teamGate").style.display = "none";
+    $("app").style.display = "block";
+    startRealtime();
+  } else {
+    $("teamGateStatus").textContent = "Incorrect team password. Try again.";
+    $("teamGatePassword").select();
+  }
+};
 $("chatForm").onsubmit = async e => {
   e.preventDefault();
   const text = $("message").value.trim();
@@ -244,11 +302,40 @@ $("chatForm").onsubmit = async e => {
   }
 };
 
-function drawMessages(raw) {
-  const box = $("messages"); box.replaceChildren();
-  const entries = Object.entries(raw || {}).map(([id, m]) => ({id, ...m}))
-    .filter(m => m && typeof m.text === "string" && typeof m.name === "string")
-    .sort((a,b) => (a.time || 0) - (b.time || 0)).slice(-100);
+function drawMessages() {
+  const box = $("messages");
+  box.replaceChildren();
+
+  // Support the current schema and common older chat schemas.
+  const normalize = (raw, source) => Object.entries(raw || {}).map(([id, value]) => {
+    if (!value || typeof value !== "object") return null;
+    const text = value.text ?? value.message ?? value.content ?? value.body;
+    const name = value.name ?? value.username ?? value.displayName ?? value.senderName ?? value.sender ?? "Team member";
+    let time = value.time ?? value.timestamp ?? value.createdAt ?? value.sentAt ?? 0;
+    if (typeof time === "string" && !/^\d+$/.test(time)) time = Date.parse(time) || 0;
+    time = Number(time) || 0;
+    if (typeof text !== "string" || !text.trim()) return null;
+    return { id: `${source}:${id}`, uid: value.uid ?? value.userId ?? "", name: String(name), text, time };
+  }).filter(Boolean);
+
+  const all = [...normalize(firebaseMessages, "messages"), ...normalize(legacyChatMessages, "chat")]
+    .sort((a, b) => a.time - b.time);
+  // De-duplicate identical records if the same message exists in both paths.
+  const seen = new Set();
+  const entries = all.filter(m => {
+    const key = `${m.uid}|${m.time}|${m.name}|${m.text}`;
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  }).slice(-200);
+
+  if (!entries.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = "No messages found in Firebase yet. If your old messages were saved only in this browser, they must be imported separately.";
+    box.appendChild(empty);
+    return;
+  }
+
   for (const m of entries) {
     const bubble = document.createElement("div"); bubble.className = "bubble";
     const small = document.createElement("small");
@@ -260,13 +347,28 @@ function drawMessages(raw) {
 }
 function startRealtime() {
   if (stopMessages) stopMessages();
+  if (stopLegacyChat) stopLegacyChat();
+  firebaseMessages = {};
+  legacyChatMessages = {};
+
   stopMessages = onValue(ref(db, "messages"), snap => {
-    drawMessages(snap.val());
-    $("chatStatus").textContent = "Connected — messages sync in real time.";
+    firebaseMessages = snap.val() || {};
+    drawMessages();
+    $("chatStatus").textContent = `Connected — ${Object.keys(firebaseMessages).length} message record(s) in /messages; syncing in real time.`;
   }, err => {
-    $("chatStatus").textContent = "Chat access blocked. Check Firebase Rules.";
-    console.error(err);
+    $("chatStatus").textContent = "Could not read /messages. Check Firebase Rules.";
+    console.error("Firebase /messages listener:", err);
   });
+
+  // Older versions may have saved chat records under /chat instead.
+  stopLegacyChat = onValue(ref(db, "chat"), snap => {
+    legacyChatMessages = snap.val() || {};
+    drawMessages();
+  }, err => {
+    // Keep the primary /messages chat working if /chat is not readable.
+    console.warn("Legacy /chat path could not be read:", err);
+  });
+
   if (stopMembers) stopMembers();
   stopMembers = onValue(ref(db, "members"), snap => {
     membersData = Object.entries(snap.val() || {}).map(([id,v]) => ({id,...v}));
@@ -280,13 +382,18 @@ function startRealtime() {
 }
 onAuthStateChanged(auth, user => {
   currentUser = user;
+  if (!user) teamGatePassed = false;
   $("auth").style.display = user ? "none" : "grid";
-  $("app").style.display = user ? "block" : "none";
+  $("teamGate").style.display = user && !teamGatePassed ? "grid" : "none";
+  $("app").style.display = user && teamGatePassed ? "block" : "none";
   if (user) {
+    $("gateEmail").textContent = user.email || user.displayName || "Team member";
     $("currentUser").textContent = user.displayName || user.email || "Team member";
-    startRealtime();
+    // Load app data only after the extra gate has been passed.
+    if (teamGatePassed) startRealtime();
   } else {
     if (stopMessages) stopMessages(); stopMessages = null;
+    if (stopLegacyChat) stopLegacyChat(); stopLegacyChat = null;
     if (stopMembers) stopMembers(); stopMembers = null;
     if (stopGames) stopGames(); stopGames = null;
   }
@@ -299,6 +406,51 @@ function openForm(t, item = null) {
   $("fields").replaceChildren(); $("itemStatus").textContent = "";
   const fields = t === "members" ? [["name","Member name"],["role","Team role"],["description","About member"]] :
     [["name","Game name"],["status","Development status"],["description","Game description"],["link","Roblox game URL (optional)"]];
+  if (t === "members") {
+    const avatarSection = document.createElement("div"); avatarSection.className = "avatar-section";
+    const avatarLabel = document.createElement("span"); avatarLabel.textContent = "Choose a profile avatar (no image upload needed)";
+    const preview = document.createElement("div"); preview.className = "avatar-preview"; preview.id = "avatarPreview";
+    const hidden = document.createElement("input"); hidden.type = "hidden"; hidden.name = "avatar"; hidden.value = item?.avatar || "🐼";
+    const grid = document.createElement("div"); grid.className = "avatar-grid"; grid.setAttribute("aria-label", "Profile avatar choices");
+    const avatars = ["🐶","🐱","🦊","🐼","🐸","🦁","🐯","🐨","🐰","🦄","🐻","🐵","🌸","🌻","🌹","🌷","🌼","🌺","🍀","🌵","🦋","🌈","🎮","🕹️","👾","🚀","⭐","💎","🔥","⚡"];
+    preview.textContent = hidden.value;
+    for (const avatar of avatars) {
+      const button = document.createElement("button"); button.type = "button"; button.className = "avatar-option"; button.textContent = avatar;
+      button.setAttribute("aria-label", `Choose ${avatar} avatar`); button.setAttribute("aria-pressed", String(avatar === hidden.value));
+      if (avatar === hidden.value) button.classList.add("selected");
+      button.onclick = () => {
+        hidden.value = avatar; preview.textContent = avatar;
+        grid.querySelectorAll(".avatar-option").forEach(option => {
+          const selected = option.textContent === avatar;
+          option.classList.toggle("selected", selected); option.setAttribute("aria-pressed", String(selected));
+        });
+      };
+      grid.appendChild(button);
+    }
+    avatarSection.append(avatarLabel, preview, grid, hidden); $("fields").appendChild(avatarSection);
+
+    const statusSection = document.createElement("div"); statusSection.className = "avatar-section";
+    const statusLabel = document.createElement("span"); statusLabel.textContent = "Choose a status emoji (shown below the profile icon)";
+    const statusPreview = document.createElement("div"); statusPreview.className = "avatar-preview"; statusPreview.style.width = "54px"; statusPreview.style.height = "54px"; statusPreview.style.fontSize = "30px"; statusPreview.style.borderColor = "#3984ff";
+    const statusHidden = document.createElement("input"); statusHidden.type = "hidden"; statusHidden.name = "statusEmoji"; statusHidden.value = item?.statusEmoji || "🙂";
+    const statusGrid = document.createElement("div"); statusGrid.className = "avatar-grid"; statusGrid.setAttribute("aria-label", "Status emoji choices");
+    const statusEmojis = ["👍","👎","❤️","😂","😎","🔥","✨","💯","🎮","🚀","😴","🤔","😭","😡","🥳","🤝","🙏","💪","👀","🌟"];
+    statusPreview.textContent = statusHidden.value;
+    for (const emoji of statusEmojis) {
+      const button = document.createElement("button"); button.type = "button"; button.className = "avatar-option"; button.textContent = emoji;
+      button.setAttribute("aria-label", `Choose status ${emoji}`); button.setAttribute("aria-pressed", String(emoji === statusHidden.value));
+      if (emoji === statusHidden.value) button.classList.add("selected");
+      button.onclick = () => {
+        statusHidden.value = emoji; statusPreview.textContent = emoji;
+        statusGrid.querySelectorAll(".avatar-option").forEach(option => {
+          const selected = option.textContent === emoji;
+          option.classList.toggle("selected", selected); option.setAttribute("aria-pressed", String(selected));
+        });
+      };
+      statusGrid.appendChild(button);
+    }
+    statusSection.append(statusLabel, statusPreview, statusGrid, statusHidden); $("fields").appendChild(statusSection);
+  }
   for (const [key,label] of fields) {
     const wrap = document.createElement("label"); wrap.style.color = "#aab8d0"; wrap.textContent = label;
     const input = key === "description" ? document.createElement("textarea") : document.createElement("input");
@@ -338,10 +490,19 @@ function renderCards(t, id, items) {
   const box = $(id); box.replaceChildren();
   for (const item of items) {
     const c = document.createElement("div"); c.className = "card";
-    const icon = document.createElement("div"); icon.textContent = t === "members" ? "👤" : "🎮";
+    const icon = document.createElement("div");
+    if (t === "members") { icon.className = "member-avatar"; icon.textContent = item.avatar || "👤"; icon.setAttribute("aria-label", "Member profile avatar"); }
+    else { icon.textContent = "🎮"; icon.style.fontSize = "38px"; icon.style.marginBottom = "12px"; }
     const title = document.createElement("h3"); title.textContent = item.name || "";
-    const sub = document.createElement("p"); sub.textContent = t === "members" ? (item.role || "Team Member") : (item.status || "In Development");
-    c.append(icon, title, sub);
+    if (t === "members") {
+      const statusEmoji = document.createElement("div"); statusEmoji.className = "status-emoji"; statusEmoji.textContent = item.statusEmoji || "🙂"; statusEmoji.title = "Member status";
+      const statusLabel = document.createElement("span"); statusLabel.className = "status-emoji-label"; statusLabel.textContent = "Status";
+      const sub = document.createElement("p"); sub.textContent = item.role || "Team Member";
+      c.append(icon, statusEmoji, statusLabel, title, sub);
+    } else {
+      const sub = document.createElement("p"); sub.textContent = item.status || "In Development";
+      c.append(icon, title, sub);
+    }
     if (item.description) { const p = document.createElement("p"); p.textContent = item.description; c.appendChild(p); }
     if (t === "games" && item.link) { const a = document.createElement("a"); a.textContent = "View on Roblox ↗"; a.href = item.link; a.target = "_blank"; a.rel = "noopener noreferrer"; c.appendChild(a); }
     const edit = document.createElement("button"); edit.textContent = "Edit"; edit.onclick = () => openForm(t, item);

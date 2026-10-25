@@ -49,6 +49,10 @@ main{padding:25px 18px;max-width:900px;margin:auto;position:relative;z-index:1}
 .card p{color:#aab8d0;white-space:pre-wrap;line-height:1.5}
 .card button,.card a{display:inline-block;padding:8px 11px;margin:5px 5px 0 0;border-radius:8px;border:1px solid #344565;background:#0b1020;color:white;text-decoration:none}
 #fields{display:grid;gap:12px}
+#memberPickers{display:grid;gap:16px;margin-top:14px}
+#memberPickers .avatar-section{display:grid!important;gap:10px;visibility:visible!important;opacity:1!important}
+#memberPickers .avatar-grid{display:grid!important;visibility:visible!important;opacity:1!important}
+#memberPickers .avatar-option{display:grid!important;visibility:visible!important;opacity:1!important;color:#fff!important;cursor:pointer!important;pointer-events:auto!important}
 #fields input,#fields textarea{width:100%;padding:12px;background:#0b1020;color:white;border:1px solid #344565;border-radius:9px}
 #fields textarea{min-height:90px}
 #modal{display:none;position:fixed;inset:0;z-index:20;background:#000b;place-items:center;padding:20px}
@@ -174,7 +178,7 @@ main{padding:25px 18px;max-width:900px;margin:auto;position:relative;z-index:1}
 <div id="modal">
   <form id="itemForm">
     <button type="button" id="close" aria-label="Close">×</button><h2 id="modalTitle">Add item</h2>
-    <div id="fields"></div><button class="primary" style="width:100%;margin-top:15px">SAVE</button>
+    <div id="fields"></div><div id="memberPickers"></div><button class="primary" style="width:100%;margin-top:15px">SAVE</button>
     <p id="itemStatus" class="status"></p>
   </form>
 </div>
@@ -403,7 +407,7 @@ document.querySelectorAll(".add").forEach(b => { if (b.dataset.type) b.onclick =
 function openForm(t, item = null) {
   type = t; editId = item ? item.id : null;
   $("modalTitle").textContent = (item ? "Edit " : "Add ") + (t === "members" ? "Member" : "Game");
-  $("fields").replaceChildren(); $("itemStatus").textContent = "";
+  $("fields").replaceChildren(); $("memberPickers").replaceChildren(); $("itemStatus").textContent = "";
   const fields = t === "members" ? [["name","Member name"],["role","Team role"],["description","About member"]] :
     [["name","Game name"],["status","Development status"],["description","Game description"],["link","Roblox game URL (optional)"]];
   if (t === "members") {
@@ -427,7 +431,7 @@ function openForm(t, item = null) {
       };
       grid.appendChild(button);
     }
-    avatarSection.append(avatarLabel, preview, grid, hidden); $("fields").appendChild(avatarSection);
+    avatarSection.append(avatarLabel, preview, grid, hidden); $("memberPickers").appendChild(avatarSection);
 
     const statusSection = document.createElement("div"); statusSection.className = "avatar-section";
     const statusLabel = document.createElement("span"); statusLabel.textContent = "Choose a status emoji (shown below the profile icon)";
@@ -449,7 +453,7 @@ function openForm(t, item = null) {
       };
       statusGrid.appendChild(button);
     }
-    statusSection.append(statusLabel, statusPreview, statusGrid, statusHidden); $("fields").appendChild(statusSection);
+    statusSection.append(statusLabel, statusPreview, statusGrid, statusHidden); $("memberPickers").appendChild(statusSection);
   }
   for (const [key,label] of fields) {
     const wrap = document.createElement("label"); wrap.style.color = "#aab8d0"; wrap.textContent = label;

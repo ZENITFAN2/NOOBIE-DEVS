@@ -110,8 +110,24 @@ main{padding:25px 18px;max-width:900px;margin:auto;position:relative;z-index:1}
       <input id="password" type="password" placeholder="Password (at least 6 characters)" minlength="6" autocomplete="current-password" required>
       <button id="authSubmit" class="primary" type="submit">LOG IN →</button>
       <button id="toggleAuth" class="secondary" type="button">Need an account? Register</button>
+      <button id="forgotPasswordBtn" class="secondary" type="button">Forgot password?</button>
       <p id="authStatus" class="status" role="status"></p>
     </form>
+    <section id="forgotPasswordPanel" style="display:none;margin-top:16px;padding:16px;background:#0b1020;border:1px solid #344565;border-radius:14px;text-align:left">
+      <h2 style="margin:0 0 8px;font-size:19px">🔐 Reset your password</h2>
+      <p class="muted" style="font-size:13px">Enter the reset access code, then we’ll email a secure password-reset link to your account.</p>
+      <form id="forgotPasswordForm">
+        <input id="forgotAccessCode" type="password" placeholder="Reset access code" autocomplete="off" required>
+        <button id="verifyResetCode" class="primary" type="button">VERIFY CODE</button>
+        <div id="resetEmailStep" style="display:none;margin-top:10px">
+          <label for="resetEmail" class="muted" style="display:block;font-size:12px;margin:0 0 6px">Account email</label>
+          <input id="resetEmail" type="email" placeholder="Enter your account email" autocomplete="email" required>
+          <button id="sendResetEmail" class="primary" type="button">EMAIL RESET LINK</button>
+        </div>
+        <button id="cancelReset" class="secondary" type="button" style="margin-top:8px">CANCEL</button>
+        <p id="resetStatus" class="status" role="status"></p>
+      </form>
+    </section>
     <p class="muted" style="font-size:12px">Use your own account. Never share your password.</p>
   </div>
 </section>
@@ -185,7 +201,7 @@ main{padding:25px 18px;max-width:900px;margin:auto;position:relative;z-index:1}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, updateProfile, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
 // Existing Firebase configuration retained.
@@ -206,6 +222,10 @@ const $ = id => document.getElementById(id);
 let registerMode = false, currentUser = null, type = "members", editId = null;
 // This client-side gate is an extra prompt, not secure authentication by itself.
 const TEAM_GATE_PASSWORD = "NOOBIEDEVSTEAM456";
+// Client-side reset-code gate and cooldown are convenience checks only; secure enforcement needs a backend.
+const PASSWORD_RESET_ACCESS_CODE = "YOUAREDUMPFORGOTBOY2484";
+const RESET_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
+let resetCodeVerified = false;
 let teamGatePassed = false;
 let stopMessages = null, stopLegacyChat = null, stopMembers = null, stopGames = null;
 let firebaseMessages = {}, legacyChatMessages = {};
@@ -218,10 +238,71 @@ $("toggleAuth").onclick = () => {
   $("displayName").style.display = registerMode ? "block" : "none";
   $("displayName").required = registerMode;
   $("password").autocomplete = registerMode ? "new-password" : "current-password";
+  $("forgotPasswordBtn").style.display = registerMode ? "none" : "block";
+  $("forgotPasswordPanel").style.display = "none";
   $("authStatus").textContent = "";
 };
 $("displayName").style.display = "none";
 $("displayName").required = false;
+
+$("forgotPasswordBtn").onclick = () => {
+  if (registerMode) {
+    $("authStatus").textContent = "Switch to Log In to use Forgot Password.";
+    return;
+  }
+  $("forgotPasswordPanel").style.display = "block";
+  $("resetEmail").value = $("email").value.trim();
+  $("resetStatus").textContent = "";
+  $("forgotAccessCode").value = "";
+  $("resetEmailStep").style.display = "none";
+  resetCodeVerified = false;
+};
+$("cancelReset").onclick = () => {
+  $("forgotPasswordPanel").style.display = "none";
+  $("resetStatus").textContent = "";
+  resetCodeVerified = false;
+};
+$("verifyResetCode").onclick = () => {
+  if ($("forgotAccessCode").value === PASSWORD_RESET_ACCESS_CODE) {
+    resetCodeVerified = true;
+    $("resetEmailStep").style.display = "block";
+    $("resetStatus").textContent = "Code accepted. Enter the email for your account.";
+  } else {
+    resetCodeVerified = false;
+    $("resetEmailStep").style.display = "none";
+    $("resetStatus").textContent = "Incorrect reset access code.";
+  }
+};
+$("sendResetEmail").onclick = async () => {
+  const email = $("resetEmail").value.trim().toLowerCase();
+  if (!resetCodeVerified) {
+    $("resetStatus").textContent = "Verify the reset access code first.";
+    return;
+  }
+  if (!email) {
+    $("resetStatus").textContent = "Enter your account email.";
+    return;
+  }
+  const cooldownKey = "noobieDevsPasswordResetAt:" + email;
+  const lastResetRequest = Number(localStorage.getItem(cooldownKey) || 0);
+  const remaining = RESET_COOLDOWN_MS - (Date.now() - lastResetRequest);
+  if (lastResetRequest && remaining > 0) {
+    const days = Math.ceil(remaining / (24 * 60 * 60 * 1000));
+    $("resetStatus").textContent = `This browser has already requested a reset for this email. Try again in about ${days} day(s).`;
+    return;
+  }
+  $("sendResetEmail").disabled = true;
+  $("resetStatus").textContent = "Sending reset email…";
+  try {
+    await sendPasswordResetEmail(auth, email);
+    localStorage.setItem(cooldownKey, String(Date.now()));
+    $("resetStatus").textContent = "Reset link sent if this email belongs to an account. Check your inbox and spam folder. This browser will block another request for 30 days.";
+  } catch (err) {
+    $("resetStatus").textContent = friendlyError(err);
+  } finally {
+    $("sendResetEmail").disabled = false;
+  }
+};
 
 $("authForm").onsubmit = async e => {
   e.preventDefault();
